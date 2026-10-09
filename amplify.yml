@@ -4,7 +4,7 @@ frontend:
   phases:
     build:
       commands:
-        - echo "Sitio estático, no hay nada que compilar"
+        - echo "Sitio estatico, no hay nada que compilar"
   artifacts:
     baseDirectory: /
     files:
