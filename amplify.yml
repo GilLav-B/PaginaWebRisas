@@ -1,0 +1,13 @@
+# AWS Amplify Hosting: sitio estático, sin paso de compilación.
+version: 1
+frontend:
+  phases:
+    build:
+      commands:
+        - echo "Sitio estático, no hay nada que compilar"
+  artifacts:
+    baseDirectory: /
+    files:
+      - '**/*'
+  cache:
+    paths: []

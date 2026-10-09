@@ -1,0 +1,683 @@
+/* =====================================================================
+   Los Municipales — cyberpunk japonés tradicional, pensado para teléfono
+   Neón magenta/cian sobre tinta índigo, con bermellón de torii,
+   oro de templo, olas seigaiha y caligrafía mincho.
+   ===================================================================== */
+
+:root {
+  --tinta: #07040f;
+  --tinta-2: #120a24;
+  --panel: rgba(18, 10, 36, 0.78);
+  --texto: #ece6ff;
+  --suave: #9d93bf;
+  --magenta: #ff2a6d;
+  --cian: #05d9e8;
+  --bermellon: #e8402c;
+  --oro: #f5c542;
+  --verde: #39ff88;
+  --borde: rgba(5, 217, 232, 0.28);
+
+  --f-cyber: "Orbitron", system-ui, sans-serif;
+  --f-jp: "Shippori Mincho", "Yu Mincho", serif;
+  --f-mono: "Share Tech Mono", ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html { color-scheme: dark; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  font-family: var(--f-mono);
+  color: var(--texto);
+  background-color: var(--tinta);
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Olas seigaiha + resplandor de neón en una capa fija
+   (background-attachment: fixed va muy lento en teléfonos) */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(ellipse at 15% 0%, rgba(255, 42, 109, 0.22), transparent 55%),
+    radial-gradient(ellipse at 90% 100%, rgba(5, 217, 232, 0.18), transparent 55%),
+    radial-gradient(circle at 50% 100%, transparent 18px, rgba(5, 217, 232, 0.07) 19px, transparent 20px, transparent 26px, rgba(255, 42, 109, 0.06) 27px, transparent 28px),
+    radial-gradient(circle at 0% 50%, transparent 18px, rgba(5, 217, 232, 0.07) 19px, transparent 20px, transparent 26px, rgba(255, 42, 109, 0.06) 27px, transparent 28px);
+  background-size: auto, auto, 60px 30px, 60px 30px;
+}
+
+/* Líneas de escaneo de monitor CRT */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 3px);
+  z-index: 50;
+}
+
+button, a, input { touch-action: manipulation; }
+
+[hidden] { display: none !important; }
+
+/* Lluvia de neón: se anima con transform (GPU), no con background-position */
+.lluvia {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: -240px;
+  height: calc(100% + 240px);
+  pointer-events: none;
+  background-image:
+    linear-gradient(to bottom, transparent, rgba(5, 217, 232, 0.35)),
+    linear-gradient(to bottom, transparent, rgba(255, 42, 109, 0.25));
+  background-size: 1px 80px, 1px 120px;
+  background-position: 0 0, 37px 0;
+  background-repeat: repeat;
+  opacity: 0.2;
+  will-change: transform;
+  animation: lluvia 2.4s linear infinite;
+  z-index: 0;
+}
+
+@keyframes lluvia {
+  to { transform: translate3d(0, 240px, 0); }
+}
+
+/* ---------- Tipografía y utilidades ---------- */
+.eyebrow {
+  margin: 0 0 8px;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  color: var(--cian);
+}
+
+h1, h2, h3 { font-family: var(--f-cyber); margin: 0; }
+
+.glitch {
+  position: relative;
+  font-size: clamp(1.8rem, 6vw, 3rem);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #fff;
+  text-shadow: 0 0 12px rgba(255, 42, 109, 0.8), 0 0 30px rgba(255, 42, 109, 0.4);
+}
+
+.glitch::before,
+.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.glitch::before {
+  color: var(--cian);
+  transform: translate(-2px, 0);
+  clip-path: inset(0 0 60% 0);
+  animation: glitch 3.2s infinite steps(1);
+}
+
+.glitch::after {
+  color: var(--magenta);
+  transform: translate(2px, 0);
+  clip-path: inset(55% 0 0 0);
+  animation: glitch 2.7s infinite steps(1) reverse;
+}
+
+@keyframes glitch {
+  0%, 88%, 100% { transform: translate(0); opacity: 0; }
+  90% { transform: translate(-4px, 1px); opacity: 1; }
+  93% { transform: translate(3px, -1px); opacity: 1; }
+  96% { transform: translate(-1px, 2px); opacity: 1; }
+}
+
+.boton-neon {
+  font-family: var(--f-cyber);
+  font-weight: 800;
+  font-size: 0.85rem;
+  letter-spacing: 0.12em;
+  color: var(--tinta);
+  background: var(--cian);
+  border: none;
+  padding: 12px 20px;
+  cursor: pointer;
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+  box-shadow: 0 0 18px rgba(5, 217, 232, 0.5);
+  transition: background 0.15s, transform 0.1s;
+}
+
+.boton-neon:hover { background: var(--magenta); color: #fff; }
+.boton-neon:active { transform: scale(0.97); }
+.boton-neon:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.boton-fantasma {
+  font-family: var(--f-mono);
+  background: transparent;
+  color: var(--magenta);
+  border: 1px solid var(--magenta);
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.boton-fantasma:hover { background: var(--magenta); color: #fff; box-shadow: 0 0 14px var(--magenta); }
+
+:focus-visible { outline: 2px solid var(--oro); outline-offset: 2px; }
+
+/* =====================================================================
+   LOGIN
+   ===================================================================== */
+.pagina-login {
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.kanji-lateral {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  writing-mode: vertical-rl;
+  font-family: var(--f-jp);
+  font-weight: 800;
+  font-size: clamp(2rem, 6vw, 4.5rem);
+  letter-spacing: 0.2em;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(255, 42, 109, 0.45);
+  text-shadow: 0 0 24px rgba(255, 42, 109, 0.25);
+  pointer-events: none;
+  user-select: none;
+}
+
+.kanji-lateral.izq { left: 3vw; }
+.kanji-lateral.der { right: 3vw; -webkit-text-stroke-color: rgba(5, 217, 232, 0.4); }
+
+.puerta {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  padding-top: 70px;
+  z-index: 1;
+}
+
+/* Torii de neón sobre la tarjeta */
+.torii {
+  position: absolute;
+  top: 0;
+  left: -18px;
+  right: -18px;
+  height: 90px;
+  pointer-events: none;
+}
+
+.torii .kasagi,
+.torii .nuki {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: var(--bermellon);
+  box-shadow: 0 0 14px rgba(232, 64, 44, 0.9), 0 0 40px rgba(232, 64, 44, 0.4);
+}
+
+.torii .kasagi {
+  top: 10px;
+  height: 14px;
+  border-radius: 50% 50% 4px 4px / 100% 100% 4px 4px;
+}
+
+.torii .nuki { top: 42px; left: 26px; right: 26px; height: 8px; }
+
+.torii::before,
+.torii::after {
+  content: "";
+  position: absolute;
+  top: 20px;
+  width: 12px;
+  height: 100vh;
+  max-height: 560px;
+  background: linear-gradient(to bottom, var(--bermellon), rgba(232, 64, 44, 0.15));
+  box-shadow: 0 0 12px rgba(232, 64, 44, 0.7);
+}
+
+.torii::before { left: 42px; }
+.torii::after { right: 42px; }
+
+.tarjeta {
+  position: relative;
+  background: var(--panel);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--borde);
+  padding: 36px 28px 32px;
+  box-shadow: 0 0 0 1px rgba(255, 42, 109, 0.15), 0 20px 60px rgba(0, 0, 0, 0.6);
+  text-align: center;
+}
+
+.titulo-jp {
+  margin: 4px 0 24px;
+  font-family: var(--f-jp);
+  font-size: 1.3rem;
+  color: var(--oro);
+  letter-spacing: 0.4em;
+  text-shadow: 0 0 10px rgba(245, 197, 66, 0.5);
+}
+
+form { display: flex; flex-direction: column; gap: 6px; text-align: left; }
+
+label { font-size: 0.8rem; color: var(--suave); letter-spacing: 0.05em; }
+
+input {
+  font-family: var(--f-mono);
+  font-size: 1rem;
+  color: var(--texto);
+  background: rgba(7, 4, 15, 0.7);
+  border: 1px solid var(--borde);
+  border-left: 3px solid var(--magenta);
+  padding: 11px 12px;
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+input:focus { outline: none; border-color: var(--cian); box-shadow: 0 0 12px rgba(5, 217, 232, 0.4); }
+
+.error {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  color: #fff;
+  background: rgba(232, 64, 44, 0.18);
+  border: 1px solid var(--bermellon);
+  font-size: 0.9rem;
+}
+
+.temblor { animation: temblor 0.4s; }
+
+@keyframes temblor {
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
+}
+
+.hanko {
+  position: absolute;
+  bottom: -18px;
+  right: -14px;
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  font-family: var(--f-jp);
+  font-weight: 800;
+  font-size: 1.7rem;
+  color: var(--bermellon);
+  border: 3px solid var(--bermellon);
+  border-radius: 8px;
+  background: rgba(7, 4, 15, 0.85);
+  transform: rotate(-12deg);
+  box-shadow: 0 0 14px rgba(232, 64, 44, 0.6);
+}
+
+/* =====================================================================
+   PÁGINA PRIVADA
+   ===================================================================== */
+.barra {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: calc(10px + env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 10px max(12px, env(safe-area-inset-left));
+  background: rgba(7, 4, 15, 0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--magenta);
+  box-shadow: 0 0 20px rgba(255, 42, 109, 0.35);
+}
+
+.logo {
+  font-family: var(--f-jp);
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: var(--oro);
+}
+
+.logo small {
+  font-family: var(--f-cyber);
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  color: var(--cian);
+  margin-left: 6px;
+}
+
+.barra-derecha { display: flex; align-items: center; gap: 8px; }
+.saludo { color: var(--cian); }
+
+/* Botón "Competir online" arriba a la derecha */
+.boton-online {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 8px 14px;
+  font-family: var(--f-cyber);
+  font-weight: 800;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: #fff;
+  text-decoration: none;
+  background: linear-gradient(135deg, var(--magenta), #b3005a);
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  box-shadow: 0 0 18px rgba(255, 42, 109, 0.6);
+  animation: pulso-online 1.6s ease-in-out infinite alternate;
+}
+
+.boton-online b { font-family: var(--f-jp); font-size: 1rem; }
+
+@keyframes pulso-online { to { filter: brightness(1.25); } }
+
+.barra .boton-fantasma { min-height: 40px; }
+
+.estado-jugador { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0 0 8px; font-size: 0.9rem; }
+.derrotas { color: var(--bermellon); }
+.derrotas b { color: #fff; }
+
+.contenido {
+  position: relative;
+  z-index: 1;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 32px 16px 64px;
+}
+
+.hero { margin-bottom: 40px; }
+.hero-texto { color: var(--suave); max-width: 560px; line-height: 1.6; }
+
+.seccion {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 1.1rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0 0 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--borde);
+}
+
+.seccion span {
+  font-family: var(--f-jp);
+  font-size: 1.6rem;
+  color: var(--magenta);
+  text-shadow: 0 0 12px var(--magenta);
+}
+
+section + section { margin-top: 44px; }
+
+/* ---------- Miembros ---------- */
+.miembros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.miembro {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 18px;
+  background: var(--panel);
+  border: 1px solid var(--borde);
+  border-top: 3px solid var(--bermellon);
+}
+
+.miembro.yo { border-color: var(--magenta); box-shadow: 0 0 18px rgba(255, 42, 109, 0.35); }
+.miembro-kana { font-family: var(--f-jp); color: var(--oro); font-size: 1.1rem; }
+.miembro-nombre { font-family: var(--f-cyber); font-weight: 800; font-size: 1.2rem; }
+.miembro-rango { color: var(--suave); font-size: 0.85rem; }
+
+/* ---------- Juegos ---------- */
+.juegos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 18px;
+}
+
+.juego {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  background: var(--panel);
+  border: 1px solid var(--borde);
+  clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
+}
+
+.juego header { display: flex; align-items: center; gap: 12px; }
+
+.kanji-juego {
+  font-family: var(--f-jp);
+  font-weight: 800;
+  font-size: 2rem;
+  color: var(--cian);
+  text-shadow: 0 0 14px var(--cian);
+}
+
+.juego h3 { font-size: 0.95rem; letter-spacing: 0.06em; }
+.instrucciones { margin: 0; color: var(--suave); font-size: 0.85rem; line-height: 1.5; }
+.juego > .boton-neon { margin-top: auto; align-self: flex-start; }
+
+.pregunta { margin: 0; font-size: 1rem; min-height: 1.2em; }
+.pregunta:empty, .progreso:empty, .pista:empty { display: none; }
+.progreso, .pista { margin: 0; color: var(--oro); font-size: 0.85rem; }
+
+.opciones { display: grid; gap: 8px; }
+
+.opcion {
+  font-family: var(--f-mono);
+  font-size: 0.95rem;
+  text-align: left;
+  color: var(--texto);
+  background: rgba(7, 4, 15, 0.6);
+  border: 1px solid var(--borde);
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.opcion:hover:not(:disabled) { border-color: var(--cian); box-shadow: 0 0 10px rgba(5, 217, 232, 0.35); }
+.opcion.correcta { border-color: var(--verde); color: var(--verde); }
+.opcion.incorrecta { border-color: var(--bermellon); color: var(--bermellon); text-decoration: line-through; }
+
+.zona-reflejos {
+  display: grid;
+  place-items: center;
+  height: 130px;
+  font-family: var(--f-jp);
+  font-weight: 800;
+  font-size: 1.4rem;
+  color: var(--suave);
+  background: rgba(7, 4, 15, 0.6);
+  border: 1px dashed var(--borde);
+  cursor: pointer;
+  user-select: none;
+}
+
+.zona-reflejos:disabled { cursor: default; }
+.zona-reflejos.esperando { color: var(--oro); border-color: var(--oro); }
+
+.zona-reflejos.ya {
+  font-size: 3.5rem;
+  color: #fff;
+  background: var(--bermellon);
+  border: 1px solid var(--bermellon);
+  box-shadow: 0 0 40px rgba(232, 64, 44, 0.8);
+}
+
+.marcador {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--suave);
+}
+
+.marcador b { color: var(--oro); }
+
+/* Atrapa al ninja */
+.tablero-ninja {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.celda-ninja {
+  aspect-ratio: 1;
+  font-family: var(--f-jp);
+  font-weight: 800;
+  font-size: 2rem;
+  color: #fff;
+  background: rgba(7, 4, 15, 0.6);
+  border: 1px solid var(--borde);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 0.08s;
+}
+
+.celda-ninja:disabled { cursor: default; }
+.celda-ninja.ninja { background: rgba(5, 217, 232, 0.2); border-color: var(--cian); text-shadow: 0 0 12px var(--cian); }
+.celda-ninja.demonio { background: rgba(232, 64, 44, 0.25); border-color: var(--bermellon); text-shadow: 0 0 12px var(--bermellon); }
+.celda-ninja.golpe { transform: scale(0.85); background: var(--verde); }
+.celda-ninja.castigo { transform: scale(0.85); background: var(--bermellon); }
+
+/* Memorama */
+.tablero-memo {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.tablero-memo:empty { display: none; }
+
+.carta {
+  aspect-ratio: 3 / 4;
+  font-family: var(--f-jp);
+  font-weight: 800;
+  font-size: 1.8rem;
+  color: #fff;
+  cursor: pointer;
+  border: 1px solid var(--magenta);
+  /* Reverso: rombos tipo tela de kimono */
+  background:
+    repeating-linear-gradient(45deg, rgba(255, 42, 109, 0.25) 0 6px, transparent 6px 12px),
+    repeating-linear-gradient(-45deg, rgba(255, 42, 109, 0.25) 0 6px, transparent 6px 12px),
+    var(--tinta-2);
+}
+
+.carta.abierta { background: var(--tinta-2); border-color: var(--cian); text-shadow: 0 0 10px var(--cian); cursor: default; }
+.carta.par { border-color: var(--oro); color: var(--oro); text-shadow: 0 0 10px var(--oro); }
+.carta:disabled { cursor: default; }
+
+/* Piedra, papel o tijera */
+.botones-ppt { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+
+.opcion-ppt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 4px;
+  font-size: 2rem;
+  color: var(--texto);
+  background: rgba(7, 4, 15, 0.6);
+  border: 1px solid var(--borde);
+  cursor: pointer;
+}
+
+.opcion-ppt small { font-family: var(--f-mono); font-size: 0.75rem; color: var(--suave); }
+.opcion-ppt:hover:not(:disabled) { border-color: var(--magenta); box-shadow: 0 0 12px rgba(255, 42, 109, 0.4); }
+.opcion-ppt:disabled { opacity: 0.4; cursor: default; }
+
+.fila-adivina { flex-direction: row; gap: 8px; }
+.fila-adivina input { margin: 0; flex: 1; min-width: 0; }
+
+/* ---------- Modal de resultado ---------- */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(7, 4, 15, 0.85);
+  backdrop-filter: blur(4px);
+}
+
+.modal[hidden] { display: none; }
+
+.modal-caja {
+  width: 100%;
+  max-width: 440px;
+  padding: 32px 24px;
+  text-align: center;
+  background: var(--tinta-2);
+  border: 1px solid var(--cian);
+  box-shadow: 0 0 40px rgba(5, 217, 232, 0.35);
+  animation: aparecer 0.25s ease-out;
+}
+
+.modal.perdio .modal-caja { border-color: var(--bermellon); box-shadow: 0 0 50px rgba(232, 64, 44, 0.5); }
+
+.modal-kanji {
+  display: block;
+  font-family: var(--f-jp);
+  font-weight: 800;
+  font-size: 5rem;
+  line-height: 1;
+  color: var(--cian);
+  text-shadow: 0 0 24px var(--cian);
+}
+
+.modal.perdio .modal-kanji { color: var(--bermellon); text-shadow: 0 0 24px var(--bermellon); }
+
+.modal-veredicto {
+  margin: 8px 0 0;
+  font-family: var(--f-cyber);
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  color: var(--suave);
+}
+
+.modal-mensaje {
+  margin: 18px 0 24px;
+  font-family: var(--f-jp);
+  font-weight: 800;
+  font-size: 1.35rem;
+  line-height: 1.4;
+  color: #fff;
+}
+
+@keyframes aparecer {
+  from { transform: scale(0.85); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* ---------- Celular ---------- */
+@media (max-width: 600px) {
+  .kanji-lateral { opacity: 0.35; }
+  .logo small { display: none; }
+  .barra .boton-fantasma { padding: 6px 10px; font-size: 0.8rem; }
+  .contenido { padding: 24px 14px calc(48px + env(safe-area-inset-bottom)); }
+  .hero { margin-bottom: 28px; }
+  .juego { padding: 16px; }
+  .opcion { min-height: 48px; }
+  .zona-reflejos { height: 150px; }
+  .boton-neon { min-height: 46px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lluvia, .glitch::before, .glitch::after { animation: none; }
+}

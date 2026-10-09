@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#07040f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icono.svg" type="image/svg+xml">
+  <title>Los Municipales</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&family=Shippori+Mincho:wght@600;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="js/auth.js"></script>
+  <script>
+    // Redirige al login antes de pintar nada si no hay sesión.
+    const usuario = protegerPagina();
+  </script>
+</head>
+<body>
+  <div class="lluvia" aria-hidden="true"></div>
+
+  <header class="barra">
+    <span class="logo">市役所 <small>LOS MUNICIPALES</small></span>
+    <div class="barra-derecha">
+      <button id="salir" class="boton-fantasma">出る</button>
+      <a href="online.html" class="boton-online"><b>対戦</b> COMPETIR ONLINE</a>
+    </div>
+  </header>
+
+  <main class="contenido">
+    <section class="hero">
+      <p class="eyebrow">// LOS MUNICIPALES · ロス・ムニシパレス</p>
+      <h1 id="titulo-bienvenida" class="glitch" data-text=""></h1>
+      <p class="estado-jugador">
+        <span id="saludo" class="saludo"></span>
+        <span class="derrotas">負 <b id="contador-derrotas">0</b> derrotas</span>
+      </p>
+      <p class="hero-texto">Supera las pruebas. Si fallas, la página te lo va a recordar sin piedad.</p>
+    </section>
+
+    <section>
+      <h2 class="seccion"><span>侍</span> La banda</h2>
+      <div id="miembros" class="miembros"></div>
+    </section>
+
+    <section>
+      <h2 class="seccion"><span>試</span> Las pruebas</h2>
+      <div class="juegos">
+
+        <!-- Trivia -->
+        <article class="juego">
+          <header><span class="kanji-juego">知</span><h3>Prueba del saber</h3></header>
+          <p class="instrucciones">Tema: <b id="trivia-tema"></b>. 5 preguntas; necesitas 3 aciertos. Cada partida trae preguntas distintas.</p>
+          <div class="juego-cuerpo">
+            <p class="pregunta" id="trivia-pregunta"></p>
+            <div class="opciones" id="trivia-opciones"></div>
+            <p class="progreso" id="trivia-progreso"></p>
+          </div>
+          <button class="boton-neon" id="trivia-iniciar">始め · Empezar</button>
+        </article>
+
+        <!-- Reflejos -->
+        <article class="juego">
+          <header><span class="kanji-juego">斬</span><h3>Reflejos de samurái</h3></header>
+          <p class="instrucciones">Cuando aparezca 斬, haz clic. Tienes menos de 400 ms. Si te adelantas, pierdes.</p>
+          <button class="zona-reflejos" id="reflejos-zona" disabled>
+            <span id="reflejos-texto">Pulsa Empezar</span>
+          </button>
+          <button class="boton-neon" id="reflejos-iniciar">始め · Empezar</button>
+        </article>
+
+        <!-- Atrapa al ninja -->
+        <article class="juego">
+          <header><span class="kanji-juego">忍</span><h3>Atrapa al ninja</h3></header>
+          <p class="instrucciones">20 segundos. Golpea al 忍 ninja 12 veces. Si tocas al 鬼 demonio, pierdes 2 puntos.</p>
+          <div class="marcador"><span>Puntos: <b id="ninja-puntos">0</b>/12</span><span>Tiempo: <b id="ninja-tiempo">20</b>s</span></div>
+          <div class="tablero-ninja" id="ninja-tablero"></div>
+          <button class="boton-neon" id="ninja-iniciar">始め · Empezar</button>
+        </article>
+
+        <!-- Memorama -->
+        <article class="juego">
+          <header><span class="kanji-juego">憶</span><h3>Memorama del templo</h3></header>
+          <p class="instrucciones">Encuentra los 6 pares de kanji en máximo 12 intentos.</p>
+          <div class="marcador"><span>Intentos: <b id="memo-intentos">0</b>/12</span><span>Pares: <b id="memo-pares">0</b>/6</span></div>
+          <div class="tablero-memo" id="memo-tablero"></div>
+          <button class="boton-neon" id="memo-iniciar">始め · Empezar</button>
+        </article>
+
+        <!-- Piedra, papel o tijera -->
+        <article class="juego">
+          <header><span class="kanji-juego">将</span><h3>Duelo contra el Shōgun</h3></header>
+          <p class="instrucciones">Piedra, papel o tijera. El primero en ganar 2 rondas se lleva el duelo.</p>
+          <div class="marcador"><span>Tú: <b id="ppt-tu">0</b></span><span>Shōgun: <b id="ppt-shogun">0</b></span></div>
+          <p class="pista" id="ppt-ronda"></p>
+          <div class="botones-ppt" id="ppt-botones">
+            <button class="opcion-ppt" data-jugada="piedra" disabled>✊<small>Piedra</small></button>
+            <button class="opcion-ppt" data-jugada="papel" disabled>✋<small>Papel</small></button>
+            <button class="opcion-ppt" data-jugada="tijera" disabled>✌️<small>Tijera</small></button>
+          </div>
+          <button class="boton-neon" id="ppt-iniciar">始め · Empezar</button>
+        </article>
+
+        <!-- Adivina -->
+        <article class="juego">
+          <header><span class="kanji-juego">運</span><h3>El número del destino</h3></header>
+          <p class="instrucciones">Adivina un número del 1 al 50. Tienes 6 intentos.</p>
+          <form class="fila-adivina" id="adivina-form">
+            <input type="number" id="adivina-input" min="1" max="50" placeholder="1–50" disabled>
+            <button class="boton-neon" id="adivina-probar" disabled>Probar</button>
+          </form>
+          <p class="pista" id="adivina-pista"></p>
+          <button class="boton-neon" id="adivina-iniciar">始め · Empezar</button>
+        </article>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- Resultado de una prueba -->
+  <div class="modal" id="modal" hidden>
+    <div class="modal-caja" role="dialog" aria-modal="true" aria-labelledby="modal-mensaje">
+      <span class="modal-kanji" id="modal-kanji"></span>
+      <p class="modal-veredicto" id="modal-veredicto"></p>
+      <p class="modal-mensaje" id="modal-mensaje"></p>
+      <button class="boton-neon" id="modal-cerrar">了解 · Ok, ya entendí</button>
+    </div>
+  </div>
+
+  <script src="js/burlas.js"></script>
+  <script src="js/preguntas.js"></script>
+  <script src="js/juegos.js"></script>
+</body>
+</html>

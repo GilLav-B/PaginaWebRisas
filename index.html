@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#07040f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icono.svg" type="image/svg+xml">
+  <title>Los Municipales</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&family=Shippori+Mincho:wght@600;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="pagina-login">
+  <div class="lluvia" aria-hidden="true"></div>
+  <div class="kanji-lateral izq" aria-hidden="true">市役所の侍</div>
+  <div class="kanji-lateral der" aria-hidden="true">恥を知れ</div>
+
+  <main class="puerta">
+    <div class="torii" aria-hidden="true">
+      <span class="kasagi"></span>
+      <span class="nuki"></span>
+    </div>
+
+    <div class="tarjeta">
+      <p class="eyebrow">// ACCESO RESTRINGIDO · 立入禁止</p>
+      <h1 class="glitch" data-text="LOS MUNICIPALES">LOS MUNICIPALES</h1>
+      <p class="titulo-jp">ロス・ムニシパレス</p>
+
+      <form id="form-login" autocomplete="off">
+        <label for="usuario">ユーザー · Usuario</label>
+        <input id="usuario" name="usuario" type="text" required autofocus spellcheck="false">
+
+        <label for="contrasena">パスワード · Contraseña</label>
+        <input id="contrasena" name="contrasena" type="password" required>
+
+        <p id="error" class="error" role="alert" hidden></p>
+
+        <button type="submit" class="boton-neon">入る · ENTRAR</button>
+      </form>
+
+      <span class="hanko" aria-hidden="true">笑</span>
+    </div>
+  </main>
+
+  <script src="js/auth.js"></script>
+  <script src="js/burlas.js"></script>
+  <script>
+    if (usuarioActual()) window.location.replace("inicio.html");
+
+    const form = document.getElementById("form-login");
+    const error = document.getElementById("error");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const ok = await iniciarSesion(form.usuario.value, form.contrasena.value);
+      if (ok) {
+        window.location.href = "inicio.html";
+        return;
+      }
+      error.textContent = azar(BURLAS_LOGIN);
+      error.hidden = false;
+      form.classList.remove("temblor");
+      void form.offsetWidth; // reinicia la animación
+      form.classList.add("temblor");
+      form.contrasena.value = "";
+      form.contrasena.focus();
+    });
+  </script>
+</body>
+</html>

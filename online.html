@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#07040f">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Los Municipales · Online</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icono.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;800&family=Shippori+Mincho:wght@600;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/online.css">
+  <script src="js/auth.js"></script>
+  <script>
+    const usuario = protegerPagina();
+  </script>
+</head>
+<body class="pagina-online">
+  <div class="lluvia" aria-hidden="true"></div>
+
+  <!-- ============ SALA DE ESPERA ============ -->
+  <section id="pantalla-sala" class="sala">
+    <header class="sala-barra">
+      <a href="inicio.html" class="boton-fantasma">← Volver</a>
+      <span class="logo">対戦 <small>ONLINE</small></span>
+    </header>
+
+    <div class="sala-caja">
+      <p class="eyebrow">// SALA DE ESPERA · 待合室</p>
+      <h1 class="glitch" data-text="LOS MUNICIPALES">LOS MUNICIPALES</h1>
+      <p id="sala-estado" class="sala-estado">Conectando…</p>
+      <button id="btn-reintentar" class="boton-neon" hidden>再接続 · Reintentar</button>
+
+      <ul id="lista-jugadores" class="lista-jugadores"></ul>
+
+      <div id="panel-host" class="panel-host" hidden>
+        <button id="btn-iniciar" class="boton-neon boton-grande">始め · Iniciar minijuegos</button>
+        <p class="sala-nota">5 minijuegos al azar. 1.º lugar = 3 pts, 2.º = 2, 3.º = 1. El último se lleva la burla.</p>
+        <details class="elegir-juego">
+          <summary>…o jugar solo uno</summary>
+          <div id="lista-juegos" class="lista-juegos"></div>
+        </details>
+      </div>
+
+      <button id="btn-pantalla" class="boton-fantasma">⛶ Pantalla completa (recomendado)</button>
+      <p class="sala-nota">Juega con el teléfono en horizontal. El anfitrión no debe salir de la página ni bloquear la pantalla.</p>
+    </div>
+  </section>
+
+  <!-- ============ PARTIDA ============ -->
+  <section id="pantalla-juego" class="partida" hidden>
+    <canvas id="lienzo"></canvas>
+
+    <div class="hud">
+      <button id="hud-salir" class="hud-salir" aria-label="Salir">✕</button>
+      <span id="hud-nombre" class="hud-nombre"></span>
+      <span id="hud-tiempo" class="hud-tiempo">60</span>
+    </div>
+
+    <div id="zona-joystick" class="zona-joystick">
+      <div id="joystick-base" class="joystick-base"><div id="joystick-palanca" class="joystick-palanca"></div></div>
+      <span class="joystick-pista">Desliza aquí para moverte</span>
+    </div>
+
+    <button id="boton-a" class="boton-a" aria-label="Acción">
+      <span>A</span>
+      <small id="boton-a-texto"></small>
+    </button>
+
+    <div id="capa" class="capa" hidden></div>
+  </section>
+
+  <div class="girar" aria-hidden="true">
+    <span class="girar-icono">📱</span>
+    <p>Gira tu teléfono</p>
+    <small>横にしてください</small>
+  </div>
+
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script src="js/burlas.js"></script>
+  <script src="js/online/motor.js"></script>
+  <script src="js/online/red.js"></script>
+  <script src="js/online/controles.js"></script>
+  <script src="js/online/juegos/empujon.js"></script>
+  <script src="js/online/juegos/futbol.js"></script>
+  <script src="js/online/juegos/tanques.js"></script>
+  <script src="js/online/juegos/lava.js"></script>
+  <script src="js/online/juegos/pollos.js"></script>
+  <script src="js/online/juegos/carreras.js"></script>
+  <script src="js/online/juegos/bombas.js"></script>
+  <script src="js/online/juegos/monedas.js"></script>
+  <script src="js/online/juegos/laser.js"></script>
+  <script src="js/online/torneo.js"></script>
+</body>
+</html>

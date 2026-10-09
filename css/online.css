@@ -1,0 +1,334 @@
+/* =====================================================================
+   Online: sala de espera, partida a pantalla completa y controles táctiles
+   ===================================================================== */
+
+.pagina-online { overscroll-behavior: none; }
+
+/* ---------- Sala de espera ---------- */
+.sala {
+  position: relative;
+  z-index: 1;
+  min-height: 100dvh;
+  padding: env(safe-area-inset-top) 16px calc(24px + env(safe-area-inset-bottom));
+}
+
+.sala-barra {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+}
+
+.sala-barra .boton-fantasma { text-decoration: none; }
+
+.sala-caja {
+  max-width: 520px;
+  margin: 8px auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: center;
+}
+
+.sala-caja .glitch { font-size: clamp(1.6rem, 8vw, 2.4rem); }
+
+.sala-estado { margin: 0; color: var(--cian); line-height: 1.5; }
+.sala-estado.error { color: var(--bermellon); }
+.sala-nota { margin: 0; color: var(--suave); font-size: 0.8rem; line-height: 1.5; }
+
+.lista-jugadores, .tabla {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+
+.lista-jugadores li, .tabla li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 10px 14px;
+  background: var(--panel);
+  border: 1px solid var(--borde);
+}
+
+.lista-jugadores li.yo, .tabla li.yo { border-color: var(--magenta); box-shadow: 0 0 14px rgba(255, 42, 109, 0.3); }
+.lista-jugadores li.vacio { color: var(--suave); border-style: dashed; }
+
+.punto-color {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #2a2340;
+  box-shadow: 0 0 10px currentColor;
+}
+
+.tabla-nombre { flex: 1; font-family: var(--f-cyber); font-weight: 800; font-size: 0.95rem; }
+.corona { color: var(--oro); font-size: 0.8rem; }
+
+.panel-host { display: flex; flex-direction: column; gap: 10px; }
+.boton-grande { padding: 18px; font-size: 1rem; }
+
+.elegir-juego summary {
+  cursor: pointer;
+  color: var(--cian);
+  padding: 10px;
+  list-style: none;
+}
+
+.lista-juegos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+}
+
+.chip-juego {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 8px 10px;
+  font-family: var(--f-mono);
+  font-size: 0.85rem;
+  text-align: left;
+  color: var(--texto);
+  background: var(--panel);
+  border: 1px solid var(--borde);
+}
+
+.chip-kanji { font-family: var(--f-jp); font-size: 1.3rem; color: var(--magenta); }
+
+/* ---------- Partida ---------- */
+.partida {
+  position: fixed;
+  inset: 0;
+  margin: 0;
+  z-index: 60;
+  background: #000;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+#lienzo { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+.hud {
+  position: absolute;
+  top: max(6px, env(safe-area-inset-top));
+  left: max(8px, env(safe-area-inset-left));
+  right: max(8px, env(safe-area-inset-right));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.hud-salir {
+  width: 32px;
+  height: 32px;
+  pointer-events: auto;
+  color: var(--suave);
+  background: rgba(7, 4, 15, 0.7);
+  border: 1px solid var(--borde);
+  font-size: 0.9rem;
+}
+
+.hud-nombre {
+  display: none;
+}
+
+.hud-tiempo {
+  font-family: var(--f-cyber);
+  font-weight: 800;
+  font-size: 1.1rem;
+  padding: 2px 12px;
+  color: #fff;
+  background: rgba(7, 4, 15, 0.7);
+  border: 1px solid var(--cian);
+}
+
+.hud-tiempo.urgente { border-color: var(--bermellon); color: var(--bermellon); animation: latido 0.5s infinite alternate; }
+
+@keyframes latido { to { transform: scale(1.12); } }
+
+/* Joystick flotante: aparece donde pones el dedo en la mitad izquierda */
+.zona-joystick {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 50%;
+  height: 75%;
+}
+
+.joystick-base {
+  position: fixed;
+  left: calc(env(safe-area-inset-left) + 90px);
+  top: calc(100% - 90px - env(safe-area-inset-bottom));
+  width: 120px;
+  height: 120px;
+  margin: -60px 0 0 -60px;
+  border-radius: 50%;
+  border: 2px solid rgba(5, 217, 232, 0.35);
+  background: rgba(5, 217, 232, 0.06);
+  pointer-events: none;
+  opacity: 0.55;
+}
+
+.joystick-base.activo { opacity: 1; border-color: var(--cian); }
+
+.joystick-palanca {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 54px;
+  height: 54px;
+  margin: -27px 0 0 -27px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #8ff6ff, var(--cian));
+  box-shadow: 0 0 18px rgba(5, 217, 232, 0.7);
+}
+
+.joystick-pista {
+  position: absolute;
+  left: max(16px, env(safe-area-inset-left));
+  bottom: max(10px, env(safe-area-inset-bottom));
+  font-size: 0.7rem;
+  color: rgba(236, 230, 255, 0.35);
+  pointer-events: none;
+}
+
+.boton-a {
+  position: absolute;
+  right: calc(max(16px, env(safe-area-inset-right)) + 16px);
+  bottom: calc(max(16px, env(safe-area-inset-bottom)) + 10px);
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: radial-gradient(circle at 35% 30%, #ff6f98, var(--magenta) 60%, #a3003a);
+  border: 3px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 24px rgba(255, 42, 109, 0.6);
+  touch-action: none;
+  opacity: 0.85;
+}
+
+.boton-a span { font-family: var(--f-cyber); font-weight: 800; font-size: 2rem; line-height: 1; }
+.boton-a small { font-family: var(--f-mono); font-size: 0.6rem; letter-spacing: 0.05em; margin-top: 2px; }
+.boton-a.presionado { transform: scale(0.9); opacity: 1; background: var(--oro); box-shadow: 0 0 34px rgba(245, 197, 66, 0.8); }
+
+/* Capa de intro / resultados */
+.capa {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  background: rgba(7, 4, 15, 0.82);
+  overflow-y: auto;
+  touch-action: pan-y;
+  z-index: 5;
+}
+
+.capa[hidden] { display: none; }
+
+.capa-caja {
+  width: 100%;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  animation: aparecer 0.25s ease-out;
+}
+
+.capa-caja h2 { font-size: clamp(1.1rem, 4vw, 1.6rem); }
+.capa-caja p { margin: 0; line-height: 1.45; }
+.capa-caja .tabla { width: 100%; gap: 4px; }
+.capa-caja .tabla li { min-height: 38px; padding: 6px 12px; }
+.capa-caja .boton-fantasma { text-decoration: none; }
+.capa-eyebrow { color: var(--cian); font-size: 0.75rem; letter-spacing: 0.15em; }
+.capa-nota { color: var(--suave); font-size: 0.8rem; }
+
+.capa-kanji {
+  font-family: var(--f-jp);
+  font-weight: 800;
+  font-size: 3.4rem;
+  line-height: 1;
+  color: var(--cian);
+  text-shadow: 0 0 22px var(--cian);
+}
+
+.capa-kanji.perdio { color: var(--bermellon); text-shadow: 0 0 22px var(--bermellon); }
+
+.capa-cuenta {
+  font-family: var(--f-cyber);
+  font-weight: 800;
+  font-size: 2.6rem;
+  color: var(--oro);
+}
+
+.capa-burla {
+  width: 100%;
+  padding: 10px 14px;
+  font-family: var(--f-jp);
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: #fff;
+  background: rgba(232, 64, 44, 0.18);
+  border: 1px solid var(--bermellon);
+}
+
+.capa-burla b { color: var(--bermellon); }
+
+.puesto { font-family: var(--f-jp); font-weight: 800; color: var(--oro); width: 1.4em; }
+.ganados { color: var(--verde); font-weight: 800; }
+.total { color: var(--suave); font-size: 0.85rem; min-width: 4.5em; text-align: right; }
+
+/* Pedir girar el teléfono durante la partida */
+.girar {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--tinta);
+  color: var(--texto);
+  text-align: center;
+}
+
+.girar p { margin: 0; font-family: var(--f-cyber); font-weight: 800; }
+.girar small { color: var(--suave); font-family: var(--f-jp); }
+.girar-icono { font-size: 3.5rem; animation: girar 1.6s ease-in-out infinite; }
+
+@keyframes girar {
+  0%, 30% { transform: rotate(0deg); }
+  60%, 100% { transform: rotate(-90deg); }
+}
+
+@media (orientation: portrait) {
+  body.jugando .girar { display: flex; }
+}
+
+/* Pantallas bajitas (horizontal): controles y capa más compactos */
+@media (max-height: 420px) {
+  .boton-a { width: 88px; height: 88px; }
+  .capa-kanji { font-size: 2.4rem; }
+  .capa-cuenta { font-size: 2rem; }
+  .capa-caja { gap: 5px; }
+  .capa-caja .tabla li { min-height: 32px; padding: 4px 10px; }
+}
