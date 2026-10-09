@@ -20,6 +20,7 @@ let tiempoRestante = 0;
 let faseActual = "sala";
 let envioEntradas = null;
 let cuentaRegresiva = null;
+let esperaHost = null;
 
 const controles = iniciarControles({
   zona: $("zona-joystick"), base: $("joystick-base"), palanca: $("joystick-palanca"), botonA: $("boton-a"),
@@ -30,6 +31,7 @@ const controles = iniciarControles({
 // ---------------------------------------------------------------------
 async function entrarASala(intento = 1) {
   mostrarEstadoSala("Conectando a la sala…");
+  clearTimeout(esperaHost);
   red?.cerrar();
   red = new Red({ mensaje: alRecibir, salio: alSalirInvitado, hostSalio: alSalirHost });
   try {
@@ -38,6 +40,11 @@ async function entrarASala(intento = 1) {
       agregarJugador(red.miId, usuario.id, usuario.nombre);
     } else {
       red.enviarAlHost({ t: "hola", uid: usuario.id, nombre: usuario.nombre });
+      // Si el anfitrión no contesta (teléfono bloqueado, pestaña congelada), avisar.
+      esperaHost = setTimeout(() => {
+        mostrarEstadoSala("El anfitrión no responde (¿bloqueó su teléfono?). Pídele que vuelva a abrir la sala y reintenta.", true);
+        red.cerrar();
+      }, 8000);
     }
   } catch (e) {
     console.warn("No se pudo entrar:", e);
@@ -72,6 +79,7 @@ function alSalirHost() {
 //  Mensajes que ven todos (el anfitrión se los aplica a sí mismo)
 // ---------------------------------------------------------------------
 function aplicar(m) {
+  clearTimeout(esperaHost);
   if (m.t === "sala") {
     sala = m.jugadores;
     miSlot = sala.find((p) => p.pid === red.miId)?.slot ?? null;
@@ -82,6 +90,9 @@ function aplicar(m) {
     recibirEstado(m);
   } else if (m.t === "llena") {
     mostrarEstadoSala("La sala está llena (máximo 4 jugadores).", true);
+    red.cerrar();
+  } else if (m.t === "duplicado") {
+    mostrarEstadoSala(`${usuario.nombre} ya está en la sala desde otro teléfono o pestaña. Ciérrala allá y reintenta.`, true);
     red.cerrar();
   }
 }
@@ -217,6 +228,7 @@ function anunciarSala() {
 
 function agregarJugador(pid, uid, nombre) {
   if (sala.some((p) => p.pid === pid)) return;
+  if (sala.some((p) => p.uid === uid)) { red.enviarA(pid, { t: "duplicado" }); return; }
   if (sala.length >= 4) { red.enviarA(pid, { t: "llena" }); return; }
   const slot = [0, 1, 2, 3].find((s) => !sala.some((p) => p.slot === s));
   sala = [...sala, { slot, pid, uid, nombre }].sort((a, b) => a.slot - b.slot);

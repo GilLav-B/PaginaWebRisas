@@ -7,7 +7,9 @@
 //  el servidor de PeerJS les dice "ID ocupado" y se conectan a él.
 // =====================================================================
 
-const SALA_ID = "losmunicipales-sala-v1";
+// Una sala distinta por sitio: así las pruebas en localhost no chocan con
+// la página publicada (todos comparten el mismo servidor público de PeerJS).
+const SALA_ID = `losmunicipales-${location.hostname.replace(/[^a-z0-9]/gi, "-")}`;
 const OPCIONES_PEER = { debug: 1 };
 
 function abrirPeer(id) {
