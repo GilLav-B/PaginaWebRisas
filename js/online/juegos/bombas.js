@@ -15,6 +15,11 @@ registrarJuego({
     };
   },
 
+  mover(j, e, dt) {
+    moverDirecto(j, j.quieto > 0 ? ENTRADA_VACIA : e, 175, dt, 12);
+    encerrar(j, 20, 40, 780, 430, 0);
+  },
+
   paso(s, ent, dt) {
     s.t += dt;
     const nivel = Math.floor(s.t / 10);
@@ -41,8 +46,7 @@ registrarJuego({
       j.quieto = Math.max(0, j.quieto - dt);
       j.cd = Math.max(0, j.cd - dt);
       if (e.pulso && j.cd === 0) { j.buceo = 0.5; j.quieto = 0.8; j.cd = 1.8; }
-      moverDirecto(j, j.quieto > 0 ? ENTRADA_VACIA : e, 175, dt, 12);
-      encerrar(j, 20, 40, 780, 430, 0);
+      this.mover(j, e, dt);
     }
     porCadaPar(s.jugadores.filter((j) => j.vivo), (a, b) => chocarCirculos(a, b, 0.4));
 

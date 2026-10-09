@@ -31,6 +31,11 @@ registrarJuego({
     Object.assign(s.balon, { x: 400, y: 235, vx: 0, vy: 0 });
   },
 
+  mover(j, e, dt) {
+    moverDirecto(j, e, 210, dt, 8);
+    encerrar(j, CANCHA.x0, CANCHA.y0, CANCHA.x1, CANCHA.y1, 0.3);
+  },
+
   paso(s, ent, dt) {
     if (s.pausa > 0) {
       s.pausa -= dt;
@@ -42,8 +47,7 @@ registrarJuego({
       const e = entrada(ent, j.id);
       j.cd = Math.max(0, j.cd - dt);
       j.patada = Math.max(0, j.patada - dt);
-      moverDirecto(j, e, 210, dt, 8);
-      encerrar(j, CANCHA.x0, CANCHA.y0, CANCHA.x1, CANCHA.y1, 0.3);
+      this.mover(j, e, dt);
       if (e.pulso && j.cd === 0) {
         j.cd = 0.45; j.patada = 0.2;
         const d = distancia(j, b);

@@ -1,8 +1,9 @@
 // =====================================================================
 //  Sala de espera + torneo online.
 //  El anfitrión (el primero en entrar) corre la física de cada juego a
-//  30 Hz y manda fotos del estado a los demás ~15 veces por segundo.
-//  Los invitados solo mandan su joystick/botón y dibujan lo que reciben.
+//  30 Hz y manda una foto del estado a los demás en cada tick.
+//  Los invitados mandan su joystick/botón y PREDICEN su propio movimiento
+//  para que responda al instante; el anfitrión siempre tiene la última palabra.
 //  Requiere: auth.js (`usuario`), burlas.js, motor.js, red.js, controles.js, juegos/*.js
 // =====================================================================
 
@@ -11,7 +12,9 @@ const JUEGOS_POR_TORNEO = 5;
 const TICK = 1 / 30;
 const PUESTOS = ["一", "二", "三", "四"];
 
-const interp = new Interpolador();
+const RETRASO_HOST = 34;      // ms que se dibuja "en el pasado" (anfitrión)
+const RETRASO_INVITADO = 90;  // un poco más para absorber los tirones de la red
+const interp = new Interpolador(RETRASO_INVITADO);
 let red = null;
 let sala = [];          // [{ slot, pid, uid, nombre }]
 let miSlot = null;
@@ -21,6 +24,10 @@ let faseActual = "sala";
 let envioEntradas = null;
 let cuentaRegresiva = null;
 let esperaHost = null;
+let latencia = 120;       // ida y vuelta al anfitrión, en ms
+let relojPing = null;
+let prediccion = null;
+let tPrediccion = 0;
 
 const controles = iniciarControles({
   zona: $("zona-joystick"), base: $("joystick-base"), palanca: $("joystick-palanca"), botonA: $("boton-a"),
@@ -36,10 +43,14 @@ async function entrarASala(intento = 1) {
   red = new Red({ mensaje: alRecibir, salio: alSalirInvitado, hostSalio: alSalirHost });
   try {
     const soyHost = await red.conectar();
+    interp.retraso = soyHost ? RETRASO_HOST : RETRASO_INVITADO;
+    $("hud-ping").hidden = soyHost;
     if (soyHost) {
       agregarJugador(red.miId, usuario.id, usuario.nombre);
     } else {
       red.enviarAlHost({ t: "hola", uid: usuario.id, nombre: usuario.nombre });
+      clearInterval(relojPing);
+      relojPing = setInterval(() => red.enviarAlHost({ t: "ping", c: performance.now() }), 2000);
       // Si el anfitrión no contesta (teléfono bloqueado, pestaña congelada), avisar.
       esperaHost = setTimeout(() => {
         mostrarEstadoSala("El anfitrión no responde (¿bloqueó su teléfono?). Pídele que vuelva a abrir la sala y reintenta.", true);
@@ -56,9 +67,14 @@ async function entrarASala(intento = 1) {
 function alRecibir(de, m) {
   if (red.esHost) {
     if (m.t === "hola") agregarJugador(de, m.uid, m.nombre);
+    else if (m.t === "ping") red.enviarA(de, { t: "pong", c: m.c });
     else if (m.t === "in") {
       const p = sala.find((p) => p.pid === de);
-      if (p) H.crudas[p.slot] = m;
+      // El canal rápido no garantiza orden: ignorar entradas más viejas que la última.
+      if (p && m.q > (H.secuencias[p.slot] || 0)) {
+        H.secuencias[p.slot] = m.q;
+        H.crudas[p.slot] = m;
+      }
     }
     return;
   }
@@ -79,6 +95,13 @@ function alSalirHost() {
 //  Mensajes que ven todos (el anfitrión se los aplica a sí mismo)
 // ---------------------------------------------------------------------
 function aplicar(m) {
+  if (m.t === "s") { recibirEstado(m); return; }
+  if (m.t === "pong") {
+    latencia = latencia * 0.7 + (performance.now() - m.c) * 0.3;
+    $("hud-ping").textContent = `${Math.round(latencia)} ms`;
+    $("hud-ping").classList.toggle("lento", latencia > 150);
+    return;
+  }
   clearTimeout(esperaHost);
   if (m.t === "sala") {
     sala = m.jugadores;
@@ -86,8 +109,6 @@ function aplicar(m) {
     pintarSala(m.enCurso);
   } else if (m.t === "fase") {
     aplicarFase(m);
-  } else if (m.t === "s") {
-    recibirEstado(m);
   } else if (m.t === "llena") {
     mostrarEstadoSala("La sala está llena (máximo 4 jugadores).", true);
     red.cerrar();
@@ -98,8 +119,7 @@ function aplicar(m) {
 }
 
 function recibirEstado(m) {
-  interp.empujar(m.s);
-  tiempoRestante = m.tr;
+  if (interp.empujar(m.s, m.k)) tiempoRestante = m.tr;
 }
 
 function aplicarFase(m) {
@@ -125,6 +145,7 @@ function aplicarFase(m) {
   if (m.fase === "intro") {
     juegoActual = juego;
     interp.reiniciar();
+    prediccion = null;
     controles.reiniciar();
     $("boton-a-texto").textContent = juego.boton;
     $("hud-nombre").textContent = juego.nombre;
@@ -188,16 +209,22 @@ function burlaHTML(b) {
 // ---------------------------------------------------------------------
 //  Entradas del jugador → anfitrión
 // ---------------------------------------------------------------------
+let secuencia = 0;
 function empezarEntradas() {
   pararEntradas();
   if (red.esHost) return; // el anfitrión lee `Control` directamente
+  let anterior = "", ultimoEnvio = 0;
+  // Se revisa cada 16 ms: si el joystick o el botón cambiaron se manda al
+  // instante; si no, se repite cada 100 ms por si se perdió un paquete.
   envioEntradas = setInterval(() => {
-    red.enviarAlHost({
-      t: "in",
-      x: Math.round(Control.x * 100) / 100, y: Math.round(Control.y * 100) / 100,
-      a: Control.a, n: Control.n, r: Control.r,
-    });
-  }, 50);
+    const x = Math.round(Control.x * 100) / 100, y = Math.round(Control.y * 100) / 100;
+    const firma = `${x},${y},${Control.a},${Control.n},${Control.r}`;
+    const ahora = performance.now();
+    if (firma === anterior && ahora - ultimoEnvio < 100) return;
+    anterior = firma;
+    ultimoEnvio = ahora;
+    red.enviarAlHostRapido({ t: "in", q: ++secuencia, x, y, a: Control.a, n: Control.n, r: Control.r });
+  }, 16);
 }
 
 function pararEntradas() {
@@ -209,7 +236,7 @@ function pararEntradas() {
 //  Lógica del anfitrión
 // ---------------------------------------------------------------------
 const H = {
-  crudas: {}, ultimos: {}, cola: [], idx: 0, puntos: {}, nombres: {},
+  crudas: {}, ultimos: {}, secuencias: {}, cola: [], idx: 0, puntos: {}, nombres: {},
   juego: null, estado: null, tiempo: 0, tick: 0, loop: null, tAnterior: 0,
   enCurso: false, ultimaFase: null, timeouts: [],
 };
@@ -231,6 +258,7 @@ function agregarJugador(pid, uid, nombre) {
   if (sala.some((p) => p.uid === uid)) { red.enviarA(pid, { t: "duplicado" }); return; }
   if (sala.length >= 4) { red.enviarA(pid, { t: "llena" }); return; }
   const slot = [0, 1, 2, 3].find((s) => !sala.some((p) => p.slot === s));
+  H.secuencias[slot] = 0;
   sala = [...sala, { slot, pid, uid, nombre }].sort((a, b) => a.slot - b.slot);
   anunciarSala();
   if (H.enCurso && H.ultimaFase) red.enviarA(pid, H.ultimaFase);
@@ -292,15 +320,16 @@ function pasoHost() {
   H.tAnterior = ahora;
   H.juego.paso(H.estado, entradasDelTick(), dt);
   H.tiempo -= dt;
-  const texto = serializar({ t: "s", s: H.estado, tr: Math.max(0, H.tiempo) });
+  H.tick++;
+  const texto = serializar({ t: "s", k: H.tick, s: H.estado, tr: Math.max(0, H.tiempo) });
   recibirEstado(JSON.parse(texto));
-  if (H.tick++ % 2 === 0) red.difundir(texto);
+  red.difundirRapido(texto);
   if (H.tiempo <= 0 || H.juego.terminado(H.estado)) terminarJuego();
 }
 
 function terminarJuego() {
   clearInterval(H.loop);
-  red.difundir(serializar({ t: "s", s: H.estado, tr: Math.max(0, H.tiempo) }));
+  red.difundirRapido(serializar({ t: "s", k: ++H.tick, s: H.estado, tr: Math.max(0, H.tiempo) }));
   const orden = H.juego.ranking(H.estado);
   const n = orden.length;
   const filas = orden.map((slot, i) => {
@@ -447,11 +476,51 @@ function dibujar() {
   ctx.setTransform(escala * dpr, 0, 0, escala * dpr, ox * dpr, oy * dpr);
   ctx.save();
   ctx.beginPath(); ctx.rect(0, 0, ANCHO, ALTO); ctx.clip();
-  juegoActual.dibujar(ctx, interp.actual(), miSlot, performance.now() / 1000);
+  juegoActual.dibujar(ctx, predecir(interp.actual()), miSlot, performance.now() / 1000);
   ctx.restore();
 
   $("hud-tiempo").textContent = Math.ceil(tiempoRestante);
   $("hud-tiempo").classList.toggle("urgente", tiempoRestante < 10);
+}
+
+// ---------------------------------------------------------------------
+//  Predicción del invitado: su propio personaje se mueve al instante con su
+//  joystick (misma física que el anfitrión, `juego.mover`) y se corrige con
+//  suavidad hacia donde dice el anfitrión, adelantado por la latencia.
+// ---------------------------------------------------------------------
+function predecir(s) {
+  if (!s || red.esHost || !juegoActual?.mover || miSlot === null || faseActual !== "juego") return s;
+  const ultimo = interp.curr;
+  const srv = ultimo?.jugadores?.find((j) => j.id === miSlot);
+  if (!srv || srv.vivo === false || srv.fin) { prediccion = null; return s; }
+
+  const ahora = performance.now();
+  const dt = Math.min(0.05, (ahora - tPrediccion) / 1000);
+  tPrediccion = ahora;
+  if (!prediccion) prediccion = { ...srv };
+  const p = prediccion;
+
+  // Estados (salto, turbo, quieto...) vienen del anfitrión; la posición es nuestra.
+  Object.assign(p, srv, { x: p.x, y: p.y, vx: p.vx, vy: p.vy, ang: p.ang });
+  juegoActual.mover(p, { x: Control.x, y: Control.y, a: Control.a }, dt, ultimo);
+
+  const adelanto = (latencia / 2 + (ahora - interp.recibido)) / 1000;
+  const tx = srv.x + (srv.vx || 0) * adelanto;
+  const ty = srv.y + (srv.vy || 0) * adelanto;
+  if (Math.hypot(tx - p.x, ty - p.y) > 90) {
+    Object.assign(p, { x: tx, y: ty, vx: srv.vx, vy: srv.vy }); // empujón o teletransporte: aceptar
+  } else {
+    const k = Math.min(1, dt * 5);
+    p.x += (tx - p.x) * k;
+    p.y += (ty - p.y) * k;
+    p.vx += ((srv.vx || 0) - p.vx) * k * 0.5;
+    p.vy += ((srv.vy || 0) - p.vy) * k * 0.5;
+    if (typeof srv.ang === "number") p.ang += normalizarAngulo(srv.ang - p.ang) * k * 0.5;
+  }
+  return {
+    ...s,
+    jugadores: s.jugadores.map((j) => (j.id === miSlot ? { ...j, x: p.x, y: p.y, ang: p.ang ?? j.ang } : j)),
+  };
 }
 
 // ---------------------------------------------------------------------

@@ -154,6 +154,15 @@
   border: 1px solid var(--cian);
 }
 
+.hud-ping {
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  color: var(--verde);
+  background: rgba(7, 4, 15, 0.7);
+}
+
+.hud-ping.lento { color: var(--bermellon); }
+
 .hud-tiempo.urgente { border-color: var(--bermellon); color: var(--bermellon); animation: latido 0.5s infinite alternate; }
 
 @keyframes latido { to { transform: scale(1.12); } }

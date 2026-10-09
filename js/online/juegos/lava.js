@@ -23,6 +23,11 @@ registrarJuego({
     };
   },
 
+  mover(j, e, dt) {
+    moverDirecto(j, e, j.salto > 0 ? 210 : 150, dt, j.salto > 0 ? 3 : 12);
+    encerrar(j, 0, 0, ANCHO, ALTO, 0);
+  },
+
   paso(s, ent, dt) {
     s.t += dt;
     const mapa = s.mapa.split("");
@@ -38,8 +43,7 @@ registrarJuego({
       j.cd = Math.max(0, j.cd - dt);
       j.salto = Math.max(0, j.salto - dt);
       if (e.pulso && j.cd === 0 && j.salto === 0) { j.salto = 0.5; j.cd = 0.75; }
-      moverDirecto(j, e, j.salto > 0 ? 210 : 150, dt, j.salto > 0 ? 3 : 12);
-      encerrar(j, 0, 0, ANCHO, ALTO, 0);
+      this.mover(j, e, dt);
       if (j.salto > 0) continue;
 
       const col = Math.floor(j.x / LAVA_TAM), fila = Math.floor(j.y / LAVA_TAM);

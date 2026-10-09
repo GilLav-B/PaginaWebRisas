@@ -137,19 +137,51 @@ function serializar(obj) {
   });
 }
 
-// ---------- Interpolación entre las dos últimas fotos del estado ----------
+// ---------- Interpolación con búfer ----------
+// Cada foto del estado trae el número de tick del anfitrión (30 por segundo).
+// Se dibuja un poco "en el pasado" (retraso) para tener siempre dos fotos entre
+// las cuales interpolar, aunque la red llegue a tirones o desordenada.
+const TICK_MS = 1000 / 30;
+
 class Interpolador {
-  constructor() { this.reiniciar(); }
-  reiniciar() { this.prev = null; this.curr = null; this.tPrev = 0; this.tCurr = 0; }
-  empujar(s) {
-    this.prev = this.curr; this.tPrev = this.tCurr;
-    this.curr = s; this.tCurr = performance.now();
+  constructor(retrasoMs) { this.retraso = retrasoMs; this.reiniciar(); }
+  reiniciar() { this.fotos = []; this.base = null; this.recibido = 0; }
+
+  // Foto más reciente y cuándo llegó.
+  get curr() { return this.fotos.length ? this.fotos[this.fotos.length - 1].s : null; }
+
+  empujar(s, k) {
+    const ahora = performance.now();
+    const f = this.fotos;
+    if (f.length && k <= f[f.length - 1].k) {
+      if (f.some((x) => x.k === k)) return false;
+      f.push({ k, s });
+      f.sort((a, b) => a.k - b.k); // llegó desordenada
+    } else {
+      f.push({ k, s });
+      this.recibido = ahora;
+    }
+    // Reloj del anfitrión estimado: el mínimo filtra los paquetes que llegaron tarde;
+    // la pequeña deriva hacia arriba se adapta si la red se vuelve más lenta.
+    const estimado = ahora - k * TICK_MS;
+    this.base = this.base === null ? estimado : Math.min(this.base + 0.3, estimado);
+    while (f.length > 30) f.shift();
+    return k === f[f.length - 1].k;
   }
+
   actual() {
-    if (!this.prev) return this.curr;
-    const intervalo = Math.max(16, this.tCurr - this.tPrev);
-    const k = limitar((performance.now() - this.tCurr) / intervalo, 0, 1);
-    return mezclarEstados(this.prev, this.curr, k);
+    const f = this.fotos;
+    if (!f.length) return null;
+    const kr = (performance.now() - this.base - this.retraso) / TICK_MS;
+    if (kr >= f[f.length - 1].k) return f[f.length - 1].s;
+    if (kr <= f[0].k) return f[0].s;
+    for (let i = f.length - 2; i >= 0; i--) {
+      if (f[i].k <= kr) {
+        const a = f[i], b = f[i + 1];
+        return mezclarEstados(a.s, b.s, (kr - a.k) / (b.k - a.k));
+      }
+    }
+    return f[f.length - 1].s;
   }
 }
 

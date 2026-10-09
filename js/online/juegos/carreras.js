@@ -26,39 +26,43 @@ registrarJuego({
     };
   },
 
+  mover(c, e, dt) {
+    const fuerza = Math.hypot(e.x, e.y);
+    if (fuerza > 0.2 && !c.fin) {
+      c.ang += normalizarAngulo(Math.atan2(e.y, e.x) - c.ang) * Math.min(1, dt * 4.5);
+      const acel = 300 * Math.min(1, fuerza) * (c.turbo > 0 ? 1.9 : 1);
+      c.vx += Math.cos(c.ang) * acel * dt;
+      c.vy += Math.sin(c.ang) * acel * dt;
+    }
+    // Derrape: la velocidad lateral se pierde poco a poco
+    const fx = Math.cos(c.ang), fy = Math.sin(c.ang);
+    const adelante = c.vx * fx + c.vy * fy;
+    const lado = -c.vx * fy + c.vy * fx;
+    const pasto = enElipse(c.x, c.y, PISTA.int) < 1;
+    const fAdelante = adelante * Math.pow(pasto ? 0.12 : 0.6, dt);
+    const fLado = lado * Math.pow(0.08, dt);
+    c.vx = fx * fAdelante - fy * fLado;
+    c.vy = fy * fAdelante + fx * fLado;
+    limitarVelocidad(c, c.turbo > 0 ? 380 : 270);
+    c.x += c.vx * dt; c.y += c.vy * dt;
+
+    // Muro exterior
+    const k = enElipse(c.x, c.y, PISTA.ext);
+    if (k > 1) {
+      const f = 1 / Math.sqrt(k);
+      c.x = PISTA.cx + (c.x - PISTA.cx) * f * 0.995;
+      c.y = PISTA.cy + (c.y - PISTA.cy) * f * 0.995;
+      c.vx *= 0.5; c.vy *= 0.5;
+    }
+  },
+
   paso(s, ent, dt) {
     for (const c of s.jugadores) {
       const e = entrada(ent, c.id);
       c.turbo = Math.max(0, c.turbo - dt);
       if (e.pulso && c.nitro >= 0.33 && c.turbo === 0) { c.nitro -= 0.33; c.turbo = 1; }
 
-      const fuerza = Math.hypot(e.x, e.y);
-      if (fuerza > 0.2 && !c.fin) {
-        c.ang += normalizarAngulo(Math.atan2(e.y, e.x) - c.ang) * Math.min(1, dt * 4.5);
-        const acel = 300 * Math.min(1, fuerza) * (c.turbo > 0 ? 1.9 : 1);
-        c.vx += Math.cos(c.ang) * acel * dt;
-        c.vy += Math.sin(c.ang) * acel * dt;
-      }
-      // Derrape: la velocidad lateral se pierde poco a poco
-      const fx = Math.cos(c.ang), fy = Math.sin(c.ang);
-      const adelante = c.vx * fx + c.vy * fy;
-      const lado = -c.vx * fy + c.vy * fx;
-      const pasto = enElipse(c.x, c.y, PISTA.int) < 1;
-      const fAdelante = adelante * Math.pow(pasto ? 0.12 : 0.6, dt);
-      const fLado = lado * Math.pow(0.08, dt);
-      c.vx = fx * fAdelante - fy * fLado;
-      c.vy = fy * fAdelante + fx * fLado;
-      limitarVelocidad(c, c.turbo > 0 ? 380 : 270);
-      c.x += c.vx * dt; c.y += c.vy * dt;
-
-      // Muro exterior
-      const k = enElipse(c.x, c.y, PISTA.ext);
-      if (k > 1) {
-        const f = 1 / Math.sqrt(k);
-        c.x = PISTA.cx + (c.x - PISTA.cx) * f * 0.995;
-        c.y = PISTA.cy + (c.y - PISTA.cy) * f * 0.995;
-        c.vx *= 0.5; c.vy *= 0.5;
-      }
+      this.mover(c, e, dt);
 
       const a = anguloPista(c.x, c.y);
       c.prog += normalizarAngulo(a - c._ultimoAng);

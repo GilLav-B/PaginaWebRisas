@@ -18,6 +18,11 @@ registrarJuego({
     return s;
   },
 
+  mover(j, e, dt, s) {
+    moverDirecto(j, e, j.id === s.bomba.de ? 215 : 195, dt, 8);
+    encerrar(j, 20, 40, 780, 430, 0.5);
+  },
+
   paso(s, ent, dt) {
     s._prox -= dt;
     if (s._prox <= 0 && s.monedas.length < 12) {
@@ -33,8 +38,7 @@ registrarJuego({
       const e = entrada(ent, j.id);
       j.cd = Math.max(0, j.cd - dt);
       j.golpe = Math.max(0, j.golpe - dt);
-      moverDirecto(j, e, j.id === bomba.de ? 215 : 195, dt, 8);
-      encerrar(j, 20, 40, 780, 430, 0.5);
+      this.mover(j, e, dt, s);
 
       if (e.pulso && j.cd === 0) {
         j.cd = 0.6; j.golpe = 0.2;

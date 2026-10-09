@@ -25,14 +25,18 @@ registrarJuego({
     return { id: s.sig++, x, y, vx: 0, vy: 0, _giro: 0 };
   },
 
+  mover(j, e, dt) {
+    moverDirecto(j, e, 200, dt, 7);
+    encerrar(j, 20, 40, 780, 430, 0.6);
+  },
+
   paso(s, ent, dt) {
     for (const j of s.jugadores) {
       const e = entrada(ent, j.id);
       j.cd = Math.max(0, j.cd - dt);
       j.escudo = Math.max(0, j.escudo - dt);
       if (e.pulso && j.cd === 0) { j.escudo = 1; j.cd = 3; j.robo = false; }
-      moverDirecto(j, e, 200, dt, 7);
-      encerrar(j, 20, 40, 780, 430, 0.6);
+      this.mover(j, e, dt);
     }
 
     porCadaPar(s.jugadores, (a, b) => {

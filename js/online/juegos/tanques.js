@@ -30,18 +30,22 @@ registrarJuego({
     };
   },
 
+  mover(j, e, dt) {
+    moverDirecto(j, e, 135, dt, 14);
+    if (Math.hypot(e.x, e.y) > 0.25) {
+      j.ang += normalizarAngulo(Math.atan2(e.y, e.x) - j.ang) * Math.min(1, dt * 12);
+    }
+    for (const m of MAPA_TANQUES) circuloVsRect(j, m);
+    encerrar(j, BORDE_T.x0, BORDE_T.y0, BORDE_T.x1, BORDE_T.y1, 0);
+  },
+
   paso(s, ent, dt) {
     for (const j of s.jugadores) {
       if (!j.vivo) continue;
       const e = entrada(ent, j.id);
       j.cd = Math.max(0, j.cd - dt);
       j.inv = Math.max(0, j.inv - dt);
-      moverDirecto(j, e, 135, dt, 14);
-      if (Math.hypot(e.x, e.y) > 0.25) {
-        j.ang += normalizarAngulo(Math.atan2(e.y, e.x) - j.ang) * Math.min(1, dt * 12);
-      }
-      for (const m of MAPA_TANQUES) circuloVsRect(j, m);
-      encerrar(j, BORDE_T.x0, BORDE_T.y0, BORDE_T.x1, BORDE_T.y1, 0);
+      this.mover(j, e, dt);
 
       const propias = s.balas.filter((b) => b.dueno === j.id).length;
       if (e.pulso && j.cd === 0 && propias < 3) {

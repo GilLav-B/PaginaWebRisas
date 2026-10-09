@@ -21,6 +21,11 @@ registrarJuego({
     };
   },
 
+  mover(j, e, dt) {
+    moverDirecto(j, e, j.agachado ? 90 : 175, dt, 12);
+    encerrar(j, 20, 40, 780, 430, 0);
+  },
+
   paso(s, ent, dt) {
     s.t += dt;
     s._prox -= dt;
@@ -48,8 +53,7 @@ registrarJuego({
         }
       }
       j.agachado = j._presion >= TOQUE_MAX && j.salto === 0;
-      moverDirecto(j, e, j.agachado ? 90 : 175, dt, 12);
-      encerrar(j, 20, 40, 780, 430, 0);
+      this.mover(j, e, dt);
     }
     porCadaPar(s.jugadores.filter((j) => j.vivo), (a, b) => chocarCirculos(a, b, 0.4));
 

@@ -16,6 +16,16 @@ registrarJuego({
     };
   },
 
+  // Movimiento de un jugador (lo usa el anfitrión y la predicción del invitado).
+  mover(j, e, dt) {
+    j.vx += e.x * 560 * dt;
+    j.vy += e.y * 560 * dt;
+    const friccion = Math.pow(0.08, dt);
+    j.vx *= friccion; j.vy *= friccion;
+    limitarVelocidad(j, 650);
+    j.x += j.vx * dt; j.y += j.vy * dt;
+  },
+
   paso(s, ent, dt) {
     s.t += dt;
     s.radio = Math.max(85, 200 - s.t * 2.3);
@@ -25,17 +35,12 @@ registrarJuego({
       const e = entrada(ent, j.id);
       j.cd = Math.max(0, j.cd - dt);
       j.dash = Math.max(0, j.dash - dt);
-      j.vx += e.x * 560 * dt;
-      j.vy += e.y * 560 * dt;
       if (e.pulso && j.cd === 0) {
         const d = direccion(j, e);
         j.vx += d.x * 380; j.vy += d.y * 380;
         j.cd = 1.4; j.dash = 0.25;
       }
-      const friccion = Math.pow(0.08, dt);
-      j.vx *= friccion; j.vy *= friccion;
-      limitarVelocidad(j, 650);
-      j.x += j.vx * dt; j.y += j.vy * dt;
+      this.mover(j, e, dt);
     }
 
     porCadaPar(vivos, (a, b) => chocarCirculos(a, b, 1.5));
